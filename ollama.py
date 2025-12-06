@@ -1,27 +1,21 @@
 import aiohttp
 import base64
-from config import Config
+from config import config
 
-class Ollama:
-    def __init__(self, config: Config):
-        self.config = config
-        self.session = aiohttp.ClientSession()
-
-    async def download_image_bytes(self, url: str) -> bytes:
-        async with self.session.get(url) as response:
-            response.raise_for_status()
+async def download_image_bytes(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
             return await response.read()
 
-    async def generate_image_description(self, image_bytes: bytes) -> str:
-        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-        data = {
-            "model": self.config.OLLAMA_MODEL,
-            "prompt": "Beschreibe dieses Bild in 1–2 kurzen, sachlichen Sätzen auf Deutsch ohne Emojis oder Spekulationen.",
-            "images": [image_base64],
-        }
-        async with self.session.post(
-            self.config.OLLAMA_URL, json=data
-        ) as response:
-            response.raise_for_status()
+async def generate_image_description(image_bytes):
+    base64_image = base64.b64encode(image_bytes).decode("utf-8")
+    prompt = "Describe this image in 1-2 short factual sentences in German. Do not use emojis or speculate."
+    data = {
+        "model": config.OLLAMA_MODEL,
+        "prompt": prompt,
+        "images": [base64_image]
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(config.OLLAMA_URL, json=data) as response:
             result = await response.json()
             return result.get("response", "")

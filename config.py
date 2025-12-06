@@ -9,3 +9,5 @@ class Config:
     OLLAMA_URL = os.getenv("OLLAMA_URL")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
     CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", 300))
+
+config = Config()

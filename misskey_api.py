@@ -1,43 +1,48 @@
 import aiohttp
-import json
-from config import Config
+from config import config
 
 class MisskeyAPI:
-    def __init__(self, config: Config):
-        self.config = config
-        self.session = aiohttp.ClientSession()
-        self.base_url = f"{config.MISSKEY_INSTANCE}/api"
+    def __init__(self):
+        self.base_url = config.MISSKEY_INSTANCE
+        self.token = config.MISSKEY_TOKEN
+        self.session = None
 
-    async def _post(self, endpoint: str, data: dict = None):
-        if data is None:
-            data = {}
-        data["i"] = self.config.MISSKEY_TOKEN
-        async with self.session.post(
-            f"{self.base_url}{endpoint}", json=data
-        ) as response:
-            response.raise_for_status()
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.session.close()
+
+    async def _post(self, endpoint, data):
+        url = f"{self.base_url}{endpoint}"
+        data["i"] = self.token
+        async with self.session.post(url, json=data) as response:
             return await response.json()
 
-    async def get_bot_user_id(self) -> str:
-        response = await self._post("/i")
-        return response["id"]
+    async def get_bot_user_id(self):
+        data = {}
+        response = await self._post("/api/i", data)
+        return response.get("id")
 
-    async def get_followers(self) -> list:
-        response = await self._post("/users/followers")
+    async def get_followers(self):
+        data = {}
+        response = await self._post("/api/users/followers", data)
         return [user["id"] for user in response]
 
-    async def get_user_notes(self, user_id: str, since_timestamp: int = None) -> list:
+    async def get_user_notes(self, user_id, since_timestamp=None):
         data = {"userId": user_id}
         if since_timestamp:
             data["sinceId"] = since_timestamp
-        response = await self._post("/users/notes", data)
+        response = await self._post("/api/users/notes", data)
         return response
 
-    async def get_note(self, note_id: str) -> dict:
-        response = await self._post("/notes/show", {"noteId": note_id})
+    async def get_note(self, note_id):
+        data = {"noteId": note_id}
+        response = await self._post("/api/notes/show", data)
         return response
 
-    async def post_reply(self, note_id: str, text: str) -> dict:
-        data = {"noteId": note_id, "text": text}
-        response = await self._post("/notes/create", data)
+    async def post_reply(self, note_id, text):
+        data = {"replyId": note_id, "text": text}
+        response = await self._post("/api/notes/create", data)
         return response
