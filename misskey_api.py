@@ -1,5 +1,9 @@
 import aiohttp
+import logging
 from config import config
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MisskeyAPI:
     def __init__(self):
@@ -17,8 +21,15 @@ class MisskeyAPI:
     async def _post(self, endpoint, data):
         url = f"{self.base_url}{endpoint}"
         data["i"] = self.token
-        async with self.session.post(url, json=data) as response:
-            return await response.json()
+        try:
+            async with self.session.post(url, json=data) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    error_msg = await response.text()
+                    logger.error(f"Failed to fetch data: {response.status}, message='{error_msg}', url='{url}'")
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
 
     async def get_bot_user_id(self):
         data = {}
@@ -26,8 +37,11 @@ class MisskeyAPI:
         return response.get("id")
 
     async def get_followers(self):
-        data = {}
+        bot_user_id = await self.get_bot_user_id()
+        data = {"userId": bot_user_id, "limit": 100}  # Added userId and limit
         response = await self._post("/api/users/followers", data)
+        if response is None:
+            return []
         return [user["id"] for user in response]
 
     async def get_user_notes(self, user_id, since_timestamp=None):
