@@ -1,14 +1,14 @@
 import aiohttp
 import logging
-from config import config
+from config import Config  # Changed from 'config' to 'Config'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MisskeyAPI:
     def __init__(self):
-        self.base_url = config.MISSKEY_INSTANCE
-        self.token = config.MISSKEY_TOKEN
+        self.base_url = Config.MISSKEY_INSTANCE  # Changed from 'config' to 'Config'
+        self.token = Config.MISSKEY_TOKEN  # Changed from 'config' to 'Config'
         self.session = None
 
     async def __aenter__(self):

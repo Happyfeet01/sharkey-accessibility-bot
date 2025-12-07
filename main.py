@@ -1,5 +1,5 @@
 import asyncio
-from config import config
+from config import Config  # Changed from 'config' to 'Config'
 from misskey_api import MisskeyAPI
 from logic import find_images_without_alt, is_valid_note, build_reminder_text
 from followup import schedule_followup
@@ -23,7 +23,7 @@ async def main():
                         await api.post_reply(note["id"], build_reminder_text())
                         processed_note_ids.add(note["id"])
                         asyncio.create_task(schedule_followup(note["id"], user_id, followers))
-            await asyncio.sleep(config.CHECK_INTERVAL_SECONDS)
+            await asyncio.sleep(Config.CHECK_INTERVAL_SECONDS)  # Changed from 'config' to 'Config'
 
 if __name__ == "__main__":
     asyncio.run(main())
